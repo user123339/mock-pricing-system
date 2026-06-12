@@ -161,6 +161,25 @@ services:
     labels:
       logging: promtail
 
+  # ── Exporters Prometheus ────────────────────────────────────────────────────
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    command: ["--kafka.server=kafka:9092"]
+    ports: ["9308:9308"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports: ["9121:9121"]
+    depends_on:
+      redis:
+        condition: service_healthy
+
   # ── Monitoring ──────────────────────────────────────────────────────────────
 
   prometheus:
@@ -182,8 +201,9 @@ services:
 
   promtail:
     image: grafana/promtail:3.0.0
+    privileged: true
     volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/snap/docker/common/var-lib-docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
